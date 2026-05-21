@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendEmail, buildClaimNotificationHtml } from '@/lib/email/adapter'
 import slugify from 'slugify'
 
 const claimSchema = z.object({
@@ -76,6 +77,23 @@ export async function POST(request: NextRequest) {
   if (error) {
     console.error('[claim] Insert error:', error)
     return NextResponse.json({ error: 'Failed to submit claim. Please try again.' }, { status: 500 })
+  }
+
+  // Notify admin
+  const notifyEmail = process.env.LEAD_NOTIFICATION_EMAIL
+  if (notifyEmail) {
+    sendEmail({
+      to: notifyEmail,
+      subject: `New Listing Claim: ${data.business_name || data.requester_name} — ${data.city || 'Indiana'}`,
+      html: buildClaimNotificationHtml({
+        requester_name: data.requester_name,
+        requester_email: data.requester_email,
+        requester_phone: data.requester_phone,
+        business_name: data.business_name,
+        license_number: data.license_number,
+        city: data.city,
+      }),
+    }).catch(e => console.error('[claim] Email notification failed:', e))
   }
 
   return NextResponse.json({ success: true }, { status: 201 })

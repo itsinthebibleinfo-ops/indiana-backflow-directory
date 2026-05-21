@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import AdminProviderActions from './AdminProviderActions'
 
@@ -13,7 +14,12 @@ export default async function AdminProvidersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-900 mb-6">Providers ({providers?.length || 0})</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-slate-900">Providers ({providers?.length || 0})</h1>
+        <Link href="/admin/providers/new/" className="btn-primary px-4 py-2 text-sm">
+          + Add Provider
+        </Link>
+      </div>
       {!providers || providers.length === 0 ? (
         <p className="text-slate-500">No providers yet.</p>
       ) : (
