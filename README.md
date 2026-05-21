@@ -1,36 +1,161 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Indiana Backflow Testing Directory
 
-## Getting Started
+A programmatic SEO directory connecting Indiana property owners with certified backflow prevention testers.
 
-First, run the development server:
+**Stack:** Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Supabase (Postgres) · Resend · Zod
+
+---
+
+## Setup Instructions
+
+### 1. Install
+
+```bash
+cd indiana-backflow-directory
+npm install
+```
+
+### 2. Environment variables
+
+Edit `.env.local` with your values:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+NEXT_PUBLIC_SITE_URL=https://indianabackflowtesting.com
+
+RESEND_API_KEY=re_xxxxxxxxxxxx
+RESEND_FROM_EMAIL=noreply@indianabackflowtesting.com
+LEAD_NOTIFICATION_EMAIL=admin@indianabackflowtesting.com
+
+ADMIN_SECRET=change_this_to_a_long_random_secret
+```
+
+### 3. Supabase setup
+
+1. Create a project at [supabase.com](https://supabase.com)
+2. In **SQL Editor**, paste and run:
+
+```
+supabase/migrations/001_initial_schema.sql
+```
+
+This creates all tables, indexes, RLS policies, and triggers.
+
+### 4. Seed cities
+
+```bash
+npm run seed:cities
+```
+
+Inserts 20 Indiana seed cities with county, utility, and geo data.
+
+### 5. Import provider data
+
+```bash
+# Validate your source file first
+npm run validate:providers -- --source=./data/providers.json
+
+# Import
+npm run import:providers -- --source=./data/providers.json
+
+# For IDEM/utility CSV sources
+npm run parse:idem -- --source=./data/idem-testers.csv --output=./data/providers.json
+npm run import:providers -- --source=./data/providers.json
+```
+
+**Data ethics:** Only import public/official/provider-submitted data. Each record must include `source_url` and `source_name`.
+
+### 6. Run locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Site Architecture
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| URL | Page |
+|-----|------|
+| `/` | Homepage |
+| `/backflow-testing/indiana/` | State hub |
+| `/backflow-testing/indiana/[city-slug]/` | City pages (dynamic) |
+| `/backflow-testing/indiana/counties/[county-slug]/` | County pages |
+| `/services/[service-slug]/` | Service type pages |
+| `/providers/[provider-slug]/` | Provider profiles |
+| `/resources/[slug]/` | Resource/educational pages |
+| `/request-backflow-test/` | Lead capture |
+| `/claim-listing/` | Provider claim form |
+| `/admin/` | Admin dashboard |
+| `/sitemap.xml` | Auto-generated sitemap |
+| `/robots.txt` | Robots file |
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Admin Dashboard
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Visit `/admin/login` and enter `ADMIN_SECRET`. Then use `/admin/` to:
+- View leads with urgency and status
+- Verify/feature/activate providers
+- Approve or reject claim requests
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Deployment (Vercel)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push repo to GitHub
+2. Import at [vercel.com](https://vercel.com)
+3. Set all env vars
+4. Set `NEXT_PUBLIC_SITE_URL` to your production domain
+5. Deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## SEO Launch Checklist
+
+- [ ] `NEXT_PUBLIC_SITE_URL` set to production domain
+- [ ] `sitemap.xml` accessible and submitted to Google Search Console
+- [ ] `robots.txt` verified
+- [ ] JSON-LD tested with [Rich Results Test](https://search.google.com/test/rich-results)
+- [ ] Lighthouse 90+ on all four metrics
+- [ ] Canonical URLs consistent (trailing slash)
+- [ ] Real provider data imported
+- [ ] Custom `intro_content` added to top 20 city rows in DB
+- [ ] Resend configured for lead emails
+- [ ] Lead form and claim form tested end-to-end
+- [ ] Admin dashboard access verified
+
+---
+
+## Data Ethics & Crawling Rules
+
+- Only ingest public/official/provider-submitted data
+- Always set `source_url` and `source_name` on imported records
+- Never scrape gated, private, or copyrighted data without permission
+- Mark placeholder/demo providers with `source_name: 'demo'`
+- Respect `robots.txt` of any reference source
+
+---
+
+## Features Requiring External Config
+
+| Feature | Requirement |
+|---------|------------|
+| Lead email notifications | `RESEND_API_KEY` |
+| Annual reminder emails | `RESEND_API_KEY` + cron job (schema ready) |
+| Provider data | Import scripts + public IDEM/utility source |
+| Admin dashboard | `ADMIN_SECRET` env var |
+
+---
+
+## Next Steps After Launch
+
+1. Import real IDEM-certified tester data
+2. Add `intro_content` to top city rows for unique content
+3. Set up Resend for email notifications
+4. Build reminder email cron job (DB schema is in place)
+5. Reach out to certified Indiana testers to claim listings
+6. Monitor Search Console for rankings and CTR
